@@ -33,7 +33,7 @@ node {
     }
 
     stage('Build') {
-        docker_image = docker.build("${IMAGE_NAMESPACE_DEV}/${IMAGE_REPOSITORY}")
+        docker_image = docker.build("${IMAGE_NAMESPACE_DEV}/${IMAGE_REPOSITORY}", "./demo/Dockerfile")
     }
 
     stage('Push') {
