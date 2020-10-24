@@ -55,11 +55,11 @@ node {
                          "KUBERNETES_INGRESS=${KUBERNETES_INGRESS}",
                          "KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE_DEV}"]) {
                     
-                    sh 'envsubst < kubernetes/cluster/deployment.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    sh 'envsubst < kubernetes/cluster/deployment.yaml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
                     
-                    sh 'envsubst < kubernetes/cluster/service.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    sh 'envsubst < kubernetes/cluster/service.yaml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
                     
-                    sh 'envsubst < kubernetes/cluster/${KUBERNETES_INGRESS}.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    sh 'envsubst < kubernetes/cluster/${KUBERNETES_INGRESS}.yaml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
                     
                 }
             
@@ -91,10 +91,10 @@ node {
                 withEnv(["KUBERNETES_CONTEXT=${TARGET_CLUSTER['KUBERNETES_CONTEXT']}", 
                          "KUBERNETES_INGRESS=${KUBERNETES_INGRESS}",
                          "KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE_PROD}"]) {
-                    sh 'envsubst < kubernetes/cluster/deployment.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
-                    sh 'envsubst < kubernetes/cluster/service.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    sh 'envsubst < kubernetes/cluster/deployment.yaml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    sh 'envsubst < kubernetes/cluster/service.yaml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
                     
-                    sh 'envsubst < kubernetes/cluster/${KUBERNETES_INGRESS}.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    sh 'envsubst < kubernetes/cluster/${KUBERNETES_INGRESS}.yaml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
                     
                 }
             
