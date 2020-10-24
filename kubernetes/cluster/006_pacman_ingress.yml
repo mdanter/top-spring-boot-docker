@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pacman
+spec:
+  rules:
+  - host: ${APPLICATION_FQDN}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pacman
+            port:
+              number: 80

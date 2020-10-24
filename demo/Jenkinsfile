@@ -1,0 +1,109 @@
+def IMAGE_REPOSITORY = "spring-boot-hello"
+
+// For available target clusters, contact your platform administrator
+def TARGET_CLUSTER_DOMAIN = "demo.mdanter.lan"
+def CLUSTER = [:];
+CLUSTER['demo.mdanter.lan']= [:];
+CLUSTER['demo.mdanter.lan']['KUBE_DOMAIN_NAME']= 'mdanter.lan';
+CLUSTER['demo.mdanter.lan']['REGISTRY_URI']= 'https://harbor.mdanter.lan';
+CLUSTER['demo.mdanter.lan']['REGISTRY_CREDENTIALS_ID']= 'jenkins-ci';
+CLUSTER['demo.mdanter.lan']['REGISTRY_HOSTNAME']= 'harbor.mdanter.lan';
+CLUSTER['demo.mdanter.lan']['TRUST_SIGNER_KEY']= '';
+CLUSTER['demo.mdanter.lan']['TRUST_SIGNER_PASSPHRASE_CREDENTAILS_ID']= 'VMware1!';
+CLUSTER['demo.mdanter.lan']['KUBERNETES_CONTEXT']= 'demo-admin@demo';
+
+KUBERNETES_INGRESS = "ingress"
+TARGET_CLUSTER = CLUSTER[TARGET_CLUSTER_DOMAIN]
+
+IMAGE_TAG ='latest'
+IMAGE_NAMESPACE_DEV='dev'
+IMAGE_NAMESPACE_PROD='prod'
+KUBERNETES_NAMESPACE_DEV = "${IMAGE_NAMESPACE_DEV}"
+KUBERNETES_NAMESPACE_PROD = "${IMAGE_NAMESPACE_PROD}"
+
+USERNAME='mdanter'
+
+APPLICATION_DOMAIN = "${TARGET_CLUSTER['KUBE_DOMAIN_NAME']}"
+
+
+node {
+
+    stage('Checkout') {
+        checkout scm
+    }
+
+    stage('Build') {
+        docker_image = docker.build("${IMAGE_NAMESPACE_DEV}/${IMAGE_REPOSITORY}")
+    }
+
+    stage('Push') {
+        docker.withRegistry(TARGET_CLUSTER['REGISTRY_URI'], TARGET_CLUSTER['REGISTRY_CREDENTIALS_ID']) {
+            docker_image.push(IMAGE_TAG)
+        }
+    }
+
+    stage('Deploy to Development') {
+        withEnv(["APPLICATION_FQDN=${IMAGE_REPOSITORY}-dev.${APPLICATION_DOMAIN}",
+                 "REGISTRY_HOSTNAME=${TARGET_CLUSTER['REGISTRY_HOSTNAME']}",
+                 "IMAGE_NAMESPACE=${IMAGE_NAMESPACE_DEV}",
+                 "IMAGE_REPOSITORY=${IMAGE_REPOSITORY}",
+                 "IMAGE_TAG=${IMAGE_TAG}",
+                 "MONGO_TAG=${MONGO_TAG}",
+                 "USERNAME=${USERNAME}"]) {
+            
+                println("Deploying to Kubernetes")
+                withEnv(["KUBERNETES_CONTEXT=${TARGET_CLUSTER['KUBERNETES_CONTEXT']}", 
+                         "KUBERNETES_INGRESS=${KUBERNETES_INGRESS}",
+                         "KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE_DEV}"]) {
+                    
+                    sh 'envsubst < ../kubernetes/cluster/004_pacman_deployment.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    
+                    sh 'envsubst < ../kubernetes/cluster/005_pacman_service.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    
+                    sh 'envsubst < ../kubernetes/cluster/006_pacman_${KUBERNETES_INGRESS}.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    
+                }
+            
+
+            println("Application deployed to Development: http://${APPLICATION_FQDN}")
+        }
+    }
+
+
+    stage('Promote') {
+        //hack at the moment to push image to prod namespace
+        docker_image = docker.build("${IMAGE_NAMESPACE_PROD}/${IMAGE_REPOSITORY}")
+
+        docker.withRegistry(TARGET_CLUSTER['REGISTRY_URI'], TARGET_CLUSTER['REGISTRY_CREDENTIALS_ID']) {
+            docker_image.push(IMAGE_TAG)
+        }
+    }
+
+
+     stage('Deploy to Production') {
+        withEnv(["APPLICATION_FQDN=${IMAGE_REPOSITORY}-prod.${APPLICATION_DOMAIN}",
+                 "REGISTRY_HOSTNAME=${TARGET_CLUSTER['REGISTRY_HOSTNAME']}",
+                 "IMAGE_NAMESPACE=${IMAGE_NAMESPACE_PROD}",
+                 "IMAGE_REPOSITORY=${IMAGE_REPOSITORY}",
+                 "IMAGE_TAG=${IMAGE_TAG}",
+                 "MONGO_TAG=${MONGO_TAG}",
+                 "USERNAME=${USERNAME}"]) {
+            
+                println("Deploying to Kubernetes")
+                withEnv(["KUBERNETES_CONTEXT=${TARGET_CLUSTER['KUBERNETES_CONTEXT']}", 
+                         "KUBERNETES_INGRESS=${KUBERNETES_INGRESS}",
+                         "KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE_PROD}"]) {
+                    sh 'envsubst < ../kubernetes/cluster/004_pacman_deployment.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    sh 'envsubst < ../kubernetes/cluster/005_pacman_service.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    
+                    sh 'envsubst < ../kubernetes/cluster/006_pacman_${KUBERNETES_INGRESS}.yml | kubectl --context=${KUBERNETES_CONTEXT} --namespace=${KUBERNETES_NAMESPACE} apply -f -'
+                    
+                }
+            
+
+            println("Application deployed to Production: http://${APPLICATION_FQDN}")
+        }
+    }
+
+
+}
