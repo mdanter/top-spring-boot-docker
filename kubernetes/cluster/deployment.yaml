@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: spring-boot 
+  name: spring-boot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: spring-boot
+  template:
+    metadata:
+      labels:
+        name: spring-boot
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: beta.kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      containers:
+        - image: ${REGISTRY_HOSTNAME}/${IMAGE_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+          name: spring-boot
+          ports:
+            - containerPort: 8080
+              name: http-server
