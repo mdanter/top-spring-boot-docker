@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: pacman
+  name: spring-boot
 spec:
   rules:
   - host: ${APPLICATION_FQDN}
@@ -11,6 +11,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: pacman
+            name: spring-boot
             port:
               number: 80

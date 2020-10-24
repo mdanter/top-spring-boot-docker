@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pacman
+  name: spring-boot 
   labels:
-    name: pacman
+    name: spring-boot
 spec:
   type: ClusterIP
   ports:
@@ -11,4 +11,4 @@ spec:
       targetPort: 8080
       protocol: TCP
   selector:
-    name: pacman
+    name: spring-boot
