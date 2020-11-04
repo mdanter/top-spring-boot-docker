@@ -50,6 +50,8 @@ node {
                  "IMAGE_TAG=${IMAGE_TAG}",
                  "USERNAME=${USERNAME}"]) {
             
+                echo sh(returnStdout: true, script: "tkg get credentials demo")
+            
                 println("Deploying to Kubernetes")
                 withEnv(["KUBERNETES_CONTEXT=${TARGET_CLUSTER['KUBERNETES_CONTEXT']}", 
                          "KUBERNETES_INGRESS=${KUBERNETES_INGRESS}",
